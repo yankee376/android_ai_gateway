@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../../ai_engine/domain/ai_inference_result.dart';
@@ -23,6 +22,9 @@ class _CameraScreenState extends State<CameraScreen> {
   int _engineVersion = -1;
   bool _hasVulkan = false;
   AIInferenceResultModel? lastResult;
+
+  bool _isModelLoading = false;
+  bool _isModelLoaded = false;
 
   @override
   void initState() {
@@ -78,6 +80,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
+    _aiEngineService.unloadModel();
     _controller?.dispose();
     super.dispose();
   }
@@ -144,9 +147,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 margin: const EdgeInsets.all(12),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Center(
-                    child: CameraPreview(_controller!),
-                  ),
+                  child: Center(child: CameraPreview(_controller!)),
                 ),
               ),
               // NCNN Status Overlay Banner
@@ -154,7 +155,10 @@ class _CameraScreenState extends State<CameraScreen> {
                 top: 24,
                 left: 24,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black.withAlpha(190),
                     borderRadius: BorderRadius.circular(8),
@@ -195,10 +199,14 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _hasVulkan ? '⚡ Vulkan GPU Acceleration: Enabled' : '💻 Compute Mode: CPU Only',
+                        _hasVulkan
+                            ? '⚡ Vulkan GPU Acceleration: Enabled'
+                            : '💻 Compute Mode: CPU Only',
                         style: TextStyle(
                           fontSize: 11,
-                          color: _hasVulkan ? Colors.amberAccent : Colors.white70,
+                          color: _hasVulkan
+                              ? Colors.amberAccent
+                              : Colors.white70,
                         ),
                       ),
                     ],
@@ -225,30 +233,50 @@ class _CameraScreenState extends State<CameraScreen> {
                 label: Text(widget.cameras[_selectedCameraIndex].name),
               ),
               ElevatedButton.icon(
-                onPressed: _aiEngineService.isNativeLoaded
-                    ? () {
-                        final dummyBytes = Uint8List(640 * 480 * 3);
-                        final result = _aiEngineService.processFrame(
-                          bytes: dummyBytes,
-                          width: 640,
-                          height: 480,
-                          format: 0,
-                        );
+                onPressed: _aiEngineService.isNativeLoaded && !_isModelLoading
+                    ? () async {
                         setState(() {
-                          lastResult = result;
+                          _isModelLoading = true;
                         });
+
+                        final bool loaded = await _aiEngineService
+                            .initializeModel(preferGpu: false);
+
+                        if (!mounted) return;
+
+                        setState(() {
+                          _isModelLoading = false;
+                          _isModelLoaded = loaded;
+                        });
+
+                        final int code = _aiEngineService.lastModelLoadCode;
+
+                        final String message = loaded
+                            ? 'NanoDet loaded bằng ${_aiEngineService.modelBackendName}'
+                            : 'Không load được NanoDet. Mã lỗi: $code';
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'NCNN Mat Processed (${result.width}x${result.height}) | Latency: ${result.inferenceTimeMs.toStringAsFixed(2)}ms',
-                            ),
-                            duration: const Duration(seconds: 2),
+                            content: Text(message),
+                            duration: const Duration(seconds: 3),
                           ),
                         );
                       }
                     : null,
-                icon: const Icon(Icons.flash_on),
-                label: const Text('Test NCNN'),
+                icon: _isModelLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(_isModelLoaded ? Icons.check_circle : Icons.memory),
+                label: Text(
+                  _isModelLoading
+                      ? 'Đang load...'
+                      : _isModelLoaded
+                      ? 'NanoDet Loaded'
+                      : 'Load NanoDet',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF7F5AF0),
                   foregroundColor: Colors.white,
