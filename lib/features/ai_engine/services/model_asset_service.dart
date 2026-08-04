@@ -7,10 +7,7 @@ class NanoDetModelFiles {
   final String paramPath;
   final String binPath;
 
-  const NanoDetModelFiles({
-    required this.paramPath,
-    required this.binPath,
-  });
+  const NanoDetModelFiles({required this.paramPath, required this.binPath});
 }
 
 /// Chuẩn bị model NCNN thành các file thật trên bộ nhớ riêng của ứng dụng.
@@ -18,15 +15,12 @@ class NanoDetModelFiles {
 /// Flutter assets nằm bên trong APK nên C++ không thể dùng trực tiếp như một
 /// đường dẫn thông thường. Service này copy model sang Application Support.
 class ModelAssetService {
-  static const String _paramAsset =
-      'assets/models/nanodet-ELite0_320.param';
+  static const String _paramAsset = 'assets/models/nanodet-ELite0_320.param';
 
-  static const String _binAsset =
-      'assets/models/nanodet-ELite0_320.bin';
+  static const String _binAsset = 'assets/models/nanodet-ELite0_320.bin';
 
   Future<NanoDetModelFiles> prepareNanoDetModel() async {
-    final Directory supportDirectory =
-        await getApplicationSupportDirectory();
+    final Directory supportDirectory = await getApplicationSupportDirectory();
 
     final Directory modelDirectory = Directory(
       '${supportDirectory.path}/models',
@@ -38,24 +32,13 @@ class ModelAssetService {
       '${modelDirectory.path}/nanodet-ELite0_320.param',
     );
 
-    final File binFile = File(
-      '${modelDirectory.path}/nanodet-ELite0_320.bin',
-    );
+    final File binFile = File('${modelDirectory.path}/nanodet-ELite0_320.bin');
 
-    await _copyAssetIfNeeded(
-      assetPath: _paramAsset,
-      destination: paramFile,
-    );
+    await _copyAssetIfNeeded(assetPath: _paramAsset, destination: paramFile);
 
-    await _copyAssetIfNeeded(
-      assetPath: _binAsset,
-      destination: binFile,
-    );
+    await _copyAssetIfNeeded(assetPath: _binAsset, destination: binFile);
 
-    return NanoDetModelFiles(
-      paramPath: paramFile.path,
-      binPath: binFile.path,
-    );
+    return NanoDetModelFiles(paramPath: paramFile.path, binPath: binFile.path);
   }
 
   Future<void> _copyAssetIfNeeded({
@@ -78,9 +61,6 @@ class ModelAssetService {
       }
     }
 
-    await destination.writeAsBytes(
-      bytes,
-      flush: true,
-    );
+    await destination.writeAsBytes(bytes, flush: true);
   }
 }
