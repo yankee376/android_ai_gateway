@@ -1,17 +1,37 @@
-# android_ai_gateway
+# edgeAI_android
 
-A new Flutter project.
+Flutter Android application for running on-device object detection through
+Dart FFI, C++, and NCNN.
 
-## Getting Started
+## Current status
 
-This project is a starting point for a Flutter application.
+The active application is based on the Android AI Gateway project.
 
-A few resources to get you started if this is your first Flutter project:
+Current active pipeline:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+    Flutter UI
+    -> Dart FFI
+    -> C++ native bridge
+    -> NCNN test processing
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+NanoDet source code and models have been copied into:
+
+    upstream/ncnn_android_nanodet/
+
+The NanoDet source is currently for reference only and has not yet been
+connected to the Flutter application.
+
+## Planned architecture
+
+    Flutter camera
+    -> Dart FFI
+    -> C++ NanoDet inference
+    -> NCNN
+    -> detection results
+    -> Flutter overlay
+
+## Source attribution
+
+See:
+
+    docs/SOURCES.md
